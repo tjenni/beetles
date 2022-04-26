@@ -1,4 +1,5 @@
 import tkinter as tk
+from helper import ScrollbarFrame
 import random
 
 
@@ -85,14 +86,14 @@ world.add_beetle(b,(100,100))
     
     
 
-
-class App:
+class App(tk.Tk):
     
-    def __init__(self, t, world):
+    def __init__(self, world):
+        super().__init__()
         
-        t.title('Beetle v1.0')
+        self.title('Beetle v1.0')
         
-        t.resizable(True, True)
+        self.resizable(True, True)
         
         
         
@@ -103,21 +104,21 @@ class App:
         
         
         
-        t.geometry('800x500')
+        self.geometry('800x400')
         
         
         
         # init frames
         
-        self.frame_left = tk.Frame(t, bg="white")
+        self.frame_left = tk.Frame(self, bg="white")
         self.frame_left.grid(row=0, column=0, sticky='nsew')
        
-        self.frame_right = tk.Frame(t, bg="white")
+        self.frame_right = tk.Frame(self, bg="white")
         self.frame_right.grid(row=0, column=1, sticky='nsew')
         
-        t.grid_rowconfigure(0, minsize=500, weight=1)
-        t.grid_columnconfigure(0, minsize=400, weight=1)
-        t.grid_columnconfigure(1, minsize=400,weight=1)
+        self.grid_rowconfigure(0, minsize=400, weight=1)
+        self.grid_columnconfigure(0, minsize=400, weight=1)
+        self.grid_columnconfigure(1, minsize=400,weight=1)
        
         
         
@@ -136,14 +137,16 @@ class App:
         
         
         self.frame_button = tk.Frame(self.frame_right, bg="white")
+        self.frame_right.columnconfigure(0, weight=1)
+        self.frame_right.rowconfigure(3, weight=1)
         self.frame_button.grid(row=0, column=0, sticky='nw')
         
         
 
         self.button_run = tk.Button(self.frame_button,
             text="run",
-            width=10,
-            height=2,
+            width=5,
+            height=1,
             activeforeground="#f00",
             command=self.run_clicked)
         
@@ -151,8 +154,8 @@ class App:
         
         self.button_stop = tk.Button(self.frame_button,
             text="step",
-            width=10,
-            height=2,
+            width=5,
+            height=1,
             activeforeground="#f00",
             command=self.step_clicked)
         
@@ -160,29 +163,59 @@ class App:
         
         
         
-        # init table
-        self.genome_table = tk.ttk.Treeview(self.frame_right)
-        self.genome_table['columns'] = ('0', '1', '2', '3', '4', '5', '6', '7', '8')
+        # Info Frame
+        
+        
+        
+        self.frame_info = tk.Frame(self.frame_right, bg="white")
+        self.frame_info.grid(row=1, column=0, sticky='nw')
+        
+        
+        self.label_time = tk.Label(self.frame_info, text="Zeit: 100", font = ('Helvetica', 12, 'bold'))
+        self.label_time.grid(row=0, column=0, sticky="W")
+        
+        self.label_n_beetles = tk.Label(self.frame_info, text="Anzahl Käfer: 100", font = ('Helvetica', 12, 'bold'))
+        self.label_n_beetles.grid(row=1, column=0, sticky="W")
+        
+        self.label_n_generation = tk.Label(self.frame_info, text="Generationen: 100", font = ('Helvetica', 12, 'bold'))
+        self.label_n_generation.grid(row=2, column=0, sticky="W")
+        
+        
+        
+        
+        
+        
+        # Genome Frame
+        
+        label = tk.Label(self.frame_right, text="Genom", font = ('Helvetica', 12, 'bold'))
+        label.grid(row=2, column=0, sticky="W")
+                
+        
+        self.frame_genome = ScrollbarFrame(self.frame_right, highlightthickness=1, highlightbackground="black")
+        self.frame_genome.grid(row=3, column=0, sticky='nswe', padx=10, pady=10)
+        
+        scrolled_frame = self.frame_genome.scrolled_frame
+        
+        # init genome table
+        self.genome_table = []
+        
+        
+        
+        for i in range(32):
+
+            cols = []
+
+            for j in range(8):
+                label = tk.Label(scrolled_frame, text="",  width=4, anchor="e")
+                
+                label.grid(row=i+1, column=j)
+                
+                cols.append(label)
+
+            self.genome_table.append(cols)
+        
         
 
-
-        self.genome_table.column("#0", width=0,  stretch=tk.NO)
-        self.genome_table.column("0",anchor=tk.CENTER, width=20)
-        self.genome_table.column("1",anchor=tk.CENTER, width=20)
-        self.genome_table.column("2",anchor=tk.CENTER, width=20)
-        self.genome_table.column("3",anchor=tk.CENTER, width=20)
-        self.genome_table.column("4",anchor=tk.CENTER, width=20)
-        self.genome_table.column("5",anchor=tk.CENTER, width=20)
-        self.genome_table.column("6",anchor=tk.CENTER, width=20)
-        self.genome_table.column("7",anchor=tk.CENTER, width=20)
-        self.genome_table.column("8",anchor=tk.CENTER, width=20)
-        
-        
-        
-
-        self.genome_table.grid(row=1, column=0, sticky='nw', padx=10, pady=10)
-        
-    
     def resize_canvas(self, event):
         size = event.width
         self.canvas.config(width=size, height=size)
@@ -244,9 +277,32 @@ class App:
             
             self.active_beetle = self.world.beetles[i]
             
+            self.show_genome()
             self.update_canvas()
             
-    
+            
+            
+            
+    def show_genome(self):
+        
+        genome = self.active_beetle.genome
+        n = len(genome)
+        
+        i = 0
+        for row in self.genome_table:
+            for col in row:
+                
+                if i < n:
+                    col['text'] = genome[i]
+                else:
+                    col['text'] = ""
+                    
+                i += 1
+            
+        
+        
+        
+        
         
         
     def run_clicked(self):
@@ -261,7 +317,9 @@ class App:
     
 
 
-t = tk.Tk()
-a = App(t, world)    
-t.mainloop()
 
+
+if __name__ == "__main__":
+    App(world).mainloop()
+    
+    
